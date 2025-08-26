@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Financeiro - Controle Mensal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .mobile-container { max-width: 100%; margin: 0 auto; }
+        .touch-target { min-height: 44px; min-width: 44px; }
+        .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+            <div id="loginForm">
+                <h1 class="text-2xl font-bold text-center mb-6 text-gray-800">Sistema Financeiro</h1>
+                <form id="loginFormElement">
+                    <div class="mb-4">
+                        <input type="email" id="emailLogin" placeholder="Seu email" required 
+                               class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target">
+                    </div>
+                    <div class="mb-6">
+                        <input type="password" id="senhaLogin" placeholder="Sua senha" required 
+                               class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 mb-3 touch-target">
+                        Entrar
+                    </button>
+                </form>
+                <div class="text-center">
+                    <button id="mostrarCadastro" class="text-blue-600 hover:text-blue-800 mb-2 touch-target">Criar nova conta</button><br>
+                    <button id="loginTeste" class="text-green-600 hover:text-green-800 text-sm touch-target">Login Teste (Gratuito)</button>
+                </div>
+            </div>
+            
+            <div id="cadastroForm" class="hidden">
+                <h2 class="text-xl font-bold text-center mb-4 text-gray-800">Criar Conta</h2>
+                <form id="cadastroFormElement">
+                    <div class="mb-3">
+                        <input type="text" id="nomeCadastro" placeholder="Seu nome" required 
+                               class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target">
+                    </div>
+                    <div class="mb-3">
+                        <input type="email" id="emailCadastro" placeholder="Seu email" required 
+                               class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target">
+                    </div>
+                    <div class="mb-4">
+                        <input type="password" id="senhaCadastro" placeholder="Sua senha (min. 6 caracteres)" required minlength="6"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-target">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 mb-3 touch-target">
+                        Cadastrar
+                    </button>
+                </form>
+                <div class="text-center">
+                    <button id="voltarLogin" class="text-blue-600 hover:text-blue-800 touch-target">Já tem conta? Fazer login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagem de Bloqueio -->
+    <div id="mensagemBloqueio" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm text-center">
+            <div class="text-red-600 text-6xl mb-4">
+                <i class="fas fa-ban"></i>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">⚠️ CONTA BLOQUEADA</h2>
+            <p class="text-gray-600 mb-4">Sua conta foi temporariamente bloqueada.</p>
+            <p class="text-gray-600 mb-6">Entre em contato com nosso suporte para mais informações:</p>
+            <div class="bg-green-50 p-4 rounded-lg mb-4">
+                <p class="font-semibold text-green-800 mb-2">📱 WhatsApp Suporte:</p>
+                <p class="text-green-700 font-bold">(11) 93487-7332</p>
+            </div>
+            <a href="https://wa.me/5511934877332" target="_blank" 
+               class="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 inline-block touch-target">
+                <i class="fab fa-whatsapp mr-2"></i>
+                Conversar no WhatsApp
+            </a>
+        </div>
+    </div>
+
+    <!-- Sistema Principal -->
+    <div id="sistemaPrincipal" class="hidden mobile-container">
+        <header class="bg-blue-600 text-white shadow-lg">
+            <div class="px-4 py-4">
+                <div class="text-center mb-4">
+                    <h1 class="text-xl font-bold">
+                        <i class="fas fa-calculator mr-2"></i>
+                        Sistema Financeiro Mensal
+                    </h1>
+                </div>
+                
+                <div class="flex justify-center flex-wrap gap-2 mb-4">
+                    <div class="relative">
+                        <button id="menuUsuario" class="bg-blue-500 hover:bg-blue-700 px-3 py-2 rounded text-sm touch-target">
+                            <i class="fas fa-user mr-1"></i>
+                            <span id="nomeUsuario">Usuário</span>
+                            <span id="tipoPlano" class="text-xs">(Gratuito)</span>
+                        </button>
+                        <div id="dropdownUsuario" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                            <button id="upgradeMenu" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 touch-target">
+                                <i class="fas fa-star text-yellow-500 mr-2"></i>
+                                <span class="preco-premium">Upgrade Premium - R$ 4,99</span>
+                            </button>
+                            <button id="sairUsuario" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 touch-target">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center items-center gap-2 mb-2">
+                    <button id="mesAnterior" class="bg-blue-500 hover:bg-blue-700 px-3 py-2 rounded touch-target">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <div class="bg-white text-blue-600 px-4 py-2 rounded font-bold text-sm" id="mesAtual">
+                        Janeiro 2025
+                    </div>
+                    
+                    <button id="proximoMes" class="bg-blue-500 hover:bg-blue-700 px-3 py-2 rounded touch-target">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <button id="verRelatorio" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded text-sm touch-target">
+                        <i class="fas fa-chart-bar"></i> Relatórios
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Banner Premium -->
+        <div id="bannerPremium" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-lock text-yellow-600 mr-2"></i>
+                    <span class="text-yellow-800 text-sm">Algumas funcionalidades estão limitadas na versão gratuita.</span>
+                </div>
+                <button id="upgradeBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm preco-premium touch-target">
+                    Upgrade R$ 4,99/mês
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensagem de Boas-vindas -->
+        <div id="mensagemBoasVindas" class="hidden bg-blue-50 border-l-4 border-blue-400 p-4">
+            <div class="flex items-center">
+                <i class="fas fa-sparkles text-blue-600 text-xl mr-3"></i>
+                <div>
+                    <p class="text-blue-800 font-semibold">Bem-vindo ao Sistema Financeiro!</p>
+                    <p class="text-blue-600 text-sm">Comece adicionando suas primeiras contas financeiras usando os botões "Adicionar" abaixo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo Mensal -->
+        <div class="px-4 py-4">
+            <div class="grid grid-cols-1 gap-4 mb-6">
+                <div class="bg-green-100 border-l-4 border-green-500 p-4 rounded shadow card-shadow">
+                    <div class="flex items-center">
+                        <i class="fas fa-arrow-up text-green-500 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-green-600 text-sm font-medium">Total a Receber</p>
+                            <p class="text-green-800 text-xl font-bold" id="totalReceber">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-red-100 border-l-4 border-red-500 p-4 rounded shadow card-shadow">
+                    <div class="flex items-center">
+                        <i class="fas fa-arrow-down text-red-500 text-2xl mr-3"></i>
+                        <div>
+                            <p class="text-red-600 text-sm font-medium">Total a Pagar</p>
+                            <p class="text-red-800 text-xl font-bold" id="totalPagar">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-l-4 p-4 rounded shadow card-shadow" id="saldoCard">
+                    <div class="flex items-center">
+                        <i class="fas fa-balance-scale text-2xl mr-3" id="saldoIcon"></i>
+                        <div>
+                            <p class="text-sm font-medium" id="saldoLabel">Saldo do Mês</p>
+                            <p class="text-xl font-bold" id="saldoValor">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contas a Receber -->
+            <div class="bg-white rounded-lg shadow-lg mb-6 card-shadow">
+                <div class="bg-green-500 text-white p-4 rounded-t-lg">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold">
+                            <i class="fas fa-plus-circle mr-2"></i>
+                            Contas a Receber
+                        </h2>
+                        <button id="adicionarReceber" class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded touch-target">
+                            <i class="fas fa-plus"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-2 py-2 text-left text-xs">Data</th>
+                                    <th class="px-2 py-2 text-left text-xs">Descrição</th>
+                                    <th class="px-2 py-2 text-left text-xs">Valor</th>
+                                    <th class="px-2 py-2 text-left text-xs">Status</th>
+                                    <th class="px-2 py-2 text-left text-xs">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaReceber" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contas a Pagar -->
+            <div class="bg-white rounded-lg shadow-lg card-shadow">
+                <div class="bg-red-500 text-white p-4 rounded-t-lg">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold">
+                            <i class="fas fa-minus-circle mr-2"></i>
+                            Contas a Pagar
+                        </h2>
+                        <button id="adicionarPagar" class="bg-red-600 hover:bg-red-700 px-3 py-2 rounded touch-target">
+                            <i class="fas fa-plus"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-2 py-2 text-left text-xs">Data</th>
+                                    <th class="px-2 py-2 text-left text-xs">Descrição</th>
+                                    <th class="px-2 py-2 text-left text-xs">Valor</th>
+                                    <th class="px-2 py-2 text-left text-xs">Status</th>
+                                    <th class="px-2 py-2 text-left text-xs">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaPagar" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Conta -->
+    <div id="modalConta" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-bold text-gray-900 mb-4" id="tituloModal">Adicionar Conta</h3>
+                
+                <form id="formConta">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Data</label>
+                        <input type="date" id="data" class="shadow appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline touch-target" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Descrição</label>
+                        <input type="text" id="descricao" class="shadow appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline touch-target" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Valor (R$)</label>
+                        <input type="number" step="0.01" id="valor" class="shadow appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline touch-target" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Método de Pagamento</label>
+                        <select id="metodoPagamento" class="shadow border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline touch-target">
+                            <option value="PIX">PIX</option>
+                            <option value="Transferência">Transferência</option>
+                            <option value="Cartão">Cartão</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Débito">Débito</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="recorrente" class="mr-2">
+                            <span class="text-gray-700 text-sm">Conta Recorrente</span>
+                        </label>
+                    </div>
+                    
+                    <div id="recorrenciaOptions" class="mb-4 hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Repetir por quantos meses? (1-200)</label>
+                        <input type="number" id="quantidadeMeses" min="1" max="200" value="1" class="shadow appearance-none border rounded w-full py-3 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline touch-target">
+                    </div>
+                    
+                    <div class="flex items-center justify-between gap-4">
+                        <button type="button" id="cancelarModal" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline flex-1 touch-target">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline flex-1 touch-target">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Relatório -->
+    <div id="modalRelatorio" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900">Relatório Histórico</h3>
+                    <div class="space-x-2">
+                        <button id="exportarRelatorio" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded touch-target">
+                            <i class="fas fa-download"></i> Exportar CSV
+                        </button>
+                        <button id="fecharRelatorio" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded touch-target">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Mês/Ano</th>
+                                <th class="px-4 py-3 text-left">Total Recebido</th>
+                                <th class="px-4 py-3 text-left">Total Pago</th>
+                                <th class="px-4 py-3 text-left">Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaRelatorio" class="divide-y divide-gray-200">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Exclusão de Série -->
+    <div id="modalExclusaoSerie" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Excluir Conta Recorrente</h3>
+                <p class="text-gray-600 mb-6" id="mensagemExclusao">Esta conta faz parte de uma série recorrente. O que deseja fazer?</p>
+                
+                <div class="flex flex-col space-y-3">
+                    <button id="excluirApenas" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded touch-target">
+                        Excluir apenas esta conta
+                    </button>
+                    <button id="excluirSerie" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded touch-target">
+                        Excluir esta e todas as futuras
+                    </button>
+                    <button id="cancelarExclusao" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded touch-target">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pagamento -->
+    <div id="modalPagamento" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4 text-center">Upgrade Premium</h3>
+                <div class="text-center mb-6">
+                    <div class="text-3xl font-bold text-green-600 mb-2 preco-premium-valor">R$ 4,99/mês</div>
+                    <p class="text-gray-600 text-sm">Menos que um café por mês</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded mb-6">
+                    <h4 class="font-semibold mb-2">✅ Benefícios Premium:</h4>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>• Relatórios históricos ilimitados</li>
+                        <li>• Export para CSV/Excel</li>
+                        <li>• Backup automático</li>
+                        <li>• Suporte prioritário</li>
+                        <li>• Sem limitações</li>
+                    </ul>
+                </div>
+                
+                <div class="space-y-3 mb-6">
+                    <button id="pagarPIX" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded flex items-center justify-center touch-target">
+                        <i class="fas fa-qrcode mr-2"></i>
+                        Pagar com PIX
+                    </button>
+                    <button id="pagarCartao" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded flex items-center justify-center touch-target">
+                        <i class="fas fa-credit-card mr-2"></i>
+                        Pagar com Cartão
+                    </button>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <button id="simularPagamento" class="text-blue-600 hover:text-blue-800 text-sm underline touch-target">
+                        Simular Pagamento (Teste)
+                    </button>
+                </div>
+                
+                <div class="flex justify-center">
+                    <button id="fecharPagamento" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded touch-target">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal PIX -->
+    <div id="modalPIX" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Pagamento PIX - <span class="preco-premium-pix">R$ 4,99</span></h3>
+                
+                <div class="bg-gray-100 p-4 rounded mb-4">
+                    <div class="text-6xl mb-2">📱</div>
+                    <p class="text-sm text-gray-600 mb-2">Escaneie o QR Code ou copie o código PIX</p>
+                    <div class="bg-white p-2 rounded border text-xs break-all">
+                        PIX-CODIGO-EXEMPLO-R$4,99-SISTEMA-FINANCEIRO
+                    </div>
+                </div>
+                
+                <p class="text-green-600 text-sm mb-4">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Após o pagamento, o acesso será liberado em até 2 minutos
+                </p>
+                
+                <button id="fecharPIX" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded touch-target">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificação -->
+    <div id="notificacao" class="hidden fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+        <span id="mensagemNotificacao"></span>
+    </div>
+
+    <script>
+        // Configuração Supabase
+        const SUPABASE_URL = 'https://ghebbonghxbfkzlzpfez.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoZWJib25naHhiZmt6bHpwZmV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxODM2NDgsImV4cCI6MjA3MTc1OTY0OH0.Y1EPGyIlmkG1XPVOqT6qqS9pW2vOnArCh0ahpBg72_g';
+        
+        let supabase = null;
+        let supabaseConectado = false;
+
+        // Inicializar Supabase
+        async function initSupabase() {
+            try {
+                if (window.supabase && window.supabase.createClient) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    
+                    // Testar conexão
+                    const { data, error } = await supabase.from('users').select('id').limit(1);
+                    
+                    if (!error) {
+                        supabaseConectado = true;
+                        console.log('✅ Supabase conectado:', SUPABASE_URL);
+                        return true;
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    throw new Error('Biblioteca Supabase não carregou');
+                }
+            } catch (error) {
+                console.log('❌ Erro conectando Supabase:', error);
+                console.log('🔄 Usando localStorage como fallback');
+                supabaseConectado = false;
+                return false;
+            }
+        }
+
+        // Variáveis globais
+        let mesAtual = 1;
+        let anoAtual = 2025;
+        let contaEditando = null;
+        let tipoContaAtual = null;
+        let contaParaExcluir = null;
+        let tipoContaParaExcluir = null;
+        let usuarioLogado = null;
+        
+        const meses = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        // Verificar se usuário está bloqueado
+        async function verificarBloqueio(email) {
+            if (!email) return false;
+            
+            if (supabaseConectado) {
+                try {
+                    const { data } = await supabase
+                        .from('user_blocks')
+                        .select('email')
+                        .eq('email', email);
+                    return data && data.length > 0;
+                } catch (error) {
+                    console.log('Erro verificando bloqueio:', error);
+                }
+            }
+            
+            // Fallback localStorage
+            const bloqueados = JSON.parse(localStorage.getItem('usuariosBloqueados') || '[]');
+            return bloqueados.includes(email);
+        }
+
+        // Verificar se usuário foi excluído
+        async function verificarExclusao(email) {
+            if (!email) return false;
+            
+            if (supabaseConectado) {
+                try {
+                    const { data } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('email', email);
+                    return !data || data.length === 0;
+                } catch (error) {
+                    console.log('Erro verificando exclusão:', error);
+                }
+            }
+            
+            // Fallback localStorage
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            return !usuarios.find(u => u.email === email);
+        }
+
+        // Logout automático e redirecionamento
+        function logoutAutomatico(motivo = 'bloqueado') {
+            usuarioLogado = null;
+            localStorage.removeItem('usuarioLogado');
+            
+            document.getElementById('sistemaPrincipal').classList.add('hidden');
+            document.getElementById('dropdownUsuario').classList.add('hidden');
+            
+            if (motivo === 'bloqueado') {
+                document.getElementById('mensagemBloqueio').classList.remove('hidden');
+                document.getElementById('loginScreen').classList.add('hidden');
+            } else {
+                document.getElementById('mensagemBloqueio').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+        }
+
+        // Verificar status do usuário continuamente
+        function verificarStatusUsuario() {
+            if (usuarioLogado && usuarioLogado.email) {
+                // Verificar se foi excluído
+                verificarExclusao(usuarioLogado.email).then(excluido => {
+                    if (excluido) {
+                        logoutAutomatico('excluido');
+                        return;
+                    }
+                    
+                    // Verificar se foi bloqueado
+                    verificarBloqueio(usuarioLogado.email).then(bloqueado => {
+                        if (bloqueado) {
+                            logoutAutomatico('bloqueado');
+                            return;
+                        }
+                    });
+                });
+            }
+        }
+
+        // Iniciar verificação contínua
+        function iniciarVerificacaoStatus() {
+            setInterval(verificarStatusUsuario, 2000); // Verificar a cada 2 segundos
+        }
+
+        // Obter preço atual configurado pelo admin
+        async function obterPrecoAtual() {
+            if (supabaseConectado) {
+                try {
+                    const { data, error } = await supabase
+                        .from('admin_data')
+                        .select('value')
+                        .eq('key', 'config')
+                        .single();
+                    
+                    if (!error && data) {
+                        const config = JSON.parse(data.value);
+                        return config.precoPremium || 4.99;
+                    }
+                } catch (error) {
+                    console.log('Erro buscando preço:', error);
+                }
+            }
+            
+            // Fallback localStorage
+            const config = JSON.parse(localStorage.getItem('configAdmin') || '{}');
+            return config.precoPremium || 4.99;
+        }
+
+        // Atualizar textos com preço dinâmico
+        async function atualizarTextosPremium() {
+            const preco = await obterPrecoAtual();
+            const precoFormatado = `R$ ${preco.toFixed(2).replace('.', ',')}`;
+            
+            document.querySelectorAll('.preco-premium').forEach(el => {
+                if (el.textContent.includes('Upgrade Premium')) {
+                    el.textContent = `Upgrade Premium - ${precoFormatado}`;
+                } else if (el.textContent.includes('Upgrade')) {
+                    el.textContent = `Upgrade ${precoFormatado}/mês`;
+                } else {
+                    el.textContent = precoFormatado;
+                }
+            });
+
+            const precoModal = document.querySelector('.preco-premium-valor');
+            if (precoModal) {
+                precoModal.textContent = `${precoFormatado}/mês`;
+            }
+
+            const precoPIX = document.querySelector('.preco-premium-pix');
+            if (precoPIX) {
+                precoPIX.textContent = precoFormatado;
+            }
+        }
+
+        // Inicializar dados financeiros vazios para usuário
+        function inicializarDadosFinanceirosVazios(email) {
+            const dadosVazios = {};
+            
+            for (let ano = 2024; ano <= 2026; ano++) {
+                for (let mes = 1; mes <= 12; mes++) {
+                    const chave = `${ano}-${mes}`;
+                    dadosVazios[chave] = {
+                        ano: ano,
+                        mes: mes,
+                        contasReceber: [],
+                        contasPagar: []
+                    };
+                }
+            }
+            
+            localStorage.setItem(`dadosFinanceiros_${email}`, JSON.stringify(dadosVazios));
+        }
+
+        // Carregar dados do mês específico do usuário
+        async function carregarDadosDoMes(ano, mes) {
+            if (!usuarioLogado || !usuarioLogado.email) return {
+                ano: ano,
+                mes: mes,
+                contasReceber: [],
+                contasPagar: []
+            };
+            
+            if (supabaseConectado) {
+                try {
+                    const { data: transacoes, error } = await supabase
+                        .from('transactions')
+                        .select('*')
+                        .eq('user_email', usuarioLogado.email)
+                        .eq('ano', ano)
+                        .eq('mes', mes)
+                        .order('data', { ascending: true });
+                    
+                    if (!error && transacoes) {
+                        const contasReceber = transacoes.filter(t => t.tipo === 'receber');
+                        const contasPagar = transacoes.filter(t => t.tipo === 'pagar');
+                        
+                        return {
+                            ano: ano,
+                            mes: mes,
+                            contasReceber: contasReceber,
+                            contasPagar: contasPagar
+                        };
+                    }
+                } catch (error) {
+                    console.log('Erro carregando dados:', error);
+                }
+            }
+            
+            // Fallback localStorage
+            const dadosUsuario = JSON.parse(
+                localStorage.getItem(`dadosFinanceiros_${usuarioLogado.email}`) || '{}'
+            );
+            
+            const chave = `${ano}-${mes}`;
+            const dadosDoMes = dadosUsuario[chave] || {
+                ano: ano,
+                mes: mes,
+                contasReceber: [],
+                contasPagar: []
+            };
+            
+            return dadosDoMes;
+        }
+
+        // Salvar dados do mês específico do usuário
+        async function salvarDadosDoMes(ano, mes, dados) {
+            if (!usuarioLogado || !usuarioLogado.email) return;
+            
+            // Sempre salvar no localStorage como backup
+            let dadosUsuario = JSON.parse(
+                localStorage.getItem(`dadosFinanceiros_${usuarioLogado.email}`) || '{}'
+            );
+            
+            const chave = `${ano}-${mes}`;
+            dadosUsuario[chave] = dados;
+            
+            localStorage.setItem(`dadosFinanceiros_${usuarioLogado.email}`, JSON.stringify(dadosUsuario));
+        }
+
+        // Salvar conta individual no Supabase
+        async function salvarContaSupabase(conta, tipo) {
+            if (!supabaseConectado || !usuarioLogado) return false;
+            
+            try {
+                const dadosConta = {
+                    user_email: usuarioLogado.email,
+                    tipo: tipo,
+                    ano: conta.ano,
+                    mes: conta.mes,
+                    data: conta.data,
+                    descricao: conta.descricao,
+                    valor: parseFloat(conta.valor),
+                    metodo_pagamento: conta.metodoPagamento,
+                    status: conta.status || 'pendente',
+                    recorrente: conta.recorrente || false,
+                    serie_id: conta.serieId || null
+                };
+
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .insert([dadosConta])
+                    .select();
+
+                if (error) {
+                    console.log('Erro salvando no Supabase:', error);
+                    return false;
+                }
+
+                console.log('✅ Conta salva no Supabase:', data);
+                return true;
+            } catch (error) {
+                console.log('Erro salvando conta:', error);
+                return false;
+            }
+        }
+
+        // Atualizar status da conta no Supabase - FUNÇÃO CORRIGIDA
+        async function atualizarStatusSupabase(conta, novoStatus, tipo) {
+            if (!supabaseConectado || !usuarioLogado) return false;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .update({ status: novoStatus })
+                    .eq('user_email', usuarioLogado.email)
+                    .eq('tipo', tipo)
+                    .eq('ano', conta.ano)
+                    .eq('mes', conta.mes)
+                    .eq('data', conta.data)
+                    .eq('descricao', conta.descricao)
+                    .eq('valor', parseFloat(conta.valor))
+                    .select();
+
+                if (error) {
+                    console.log('Erro atualizando status no Supabase:', error);
+                    return false;
+                }
+
+                console.log('✅ Status atualizado no Supabase:', data);
+                return true;
+            } catch (error) {
+                console.log('Erro atualizando status:', error);
+                return false;
+            }
+        }
+
+        // Excluir conta do Supabase
+        async function excluirContaSupabase(conta, tipo) {
+            if (!supabaseConectado || !usuarioLogado) return false;
+            
+            try {
+                const { error } = await supabase
+                    .from('transactions')
+                    .delete()
+                    .eq('user_email', usuarioLogado.email)
+                    .eq('tipo', tipo)
+                    .eq('ano', conta.ano)
+                    .eq('mes', conta.mes)
+                    .eq('data', conta.data)
+                    .eq('descricao', conta.descricao)
+                    .eq('valor', parseFloat(conta.valor));
+
+                if (error) {
+                    console.log('Erro excluindo do Supabase:', error);
+                    return false;
+                }
+
+                console.log('✅ Conta excluída do Supabase');
+                return true;
+            } catch (error) {
+                console.log('Erro excluindo conta:', error);
+                return false;
+            }
+        }
+
+        // Inicializar aplicação
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initSupabase();
+            verificarLogin();
+            inicializarEventosLogin();
+            configurarEventos();
+            atualizarTextosPremium();
+            iniciarVerificacaoStatus();
+        });
+
+        // Verificar login
+        async function verificarLogin() {
+            const sessao = localStorage.getItem('usuarioLogado');
+            if (sessao) {
+                try {
+                    usuarioLogado = JSON.parse(sessao);
+                    
+                    // Verificar se usuário foi excluído
+                    if (await verificarExclusao(usuarioLogado.email)) {
+                        logoutAutomatico('excluido');
+                        return;
+                    }
+                    
+                    // Verificar se usuário está bloqueado
+                    if (await verificarBloqueio(usuarioLogado.email)) {
+                        logoutAutomatico('bloqueado');
+                        return;
+                    }
+                    
+                    mostrarSistema();
+                } catch (error) {
+                    mostrarLogin();
+                }
+            } else {
+                mostrarLogin();
+            }
+        }
+
+        function mostrarLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('sistemaPrincipal').classList.add('hidden');
+            document.getElementById('mensagemBloqueio').classList.add('hidden');
+        }
+
+        async function mostrarSistema() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('sistemaPrincipal').classList.remove('hidden');
+            document.getElementById('mensagemBloqueio').classList.add('hidden');
+            atualizarInterfaceUsuario();
+            await atualizarTextosPremium();
+            carregarMes();
+            verificarSeExibeMensagemBoasVindas();
+        }
+
+        async function verificarSeExibeMensagemBoasVindas() {
+            if (!usuarioLogado) return;
+            
+            let temContas = false;
+            
+            if (supabaseConectado) {
+                try {
+                    const { data: transacoes } = await supabase
+                        .from('transactions')
+                        .select('id')
+                        .eq('user_email', usuarioLogado.email)
+                        .limit(1);
+                    
+                    temContas = transacoes && transacoes.length > 0;
+                } catch (error) {
+                    console.log('Erro verificando contas:', error);
+                }
+            }
+            
+            if (!temContas) {
+                // Fallback localStorage
+                const dadosUsuario = JSON.parse(
+                    localStorage.getItem(`dadosFinanceiros_${usuarioLogado.email}`) || '{}'
+                );
+                
+                for (const chave in dadosUsuario) {
+                    const dados = dadosUsuario[chave];
+                    if (dados && dados.contasReceber && dados.contasPagar) {
+                        if (dados.contasReceber.length > 0 || dados.contasPagar.length > 0) {
+                            temContas = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            const mensagemBoasVindas = document.getElementById('mensagemBoasVindas');
+            if (!temContas) {
+                mensagemBoasVindas.classList.remove('hidden');
+            } else {
+                mensagemBoasVindas.classList.add('hidden');
+            }
+        }
+
+        function atualizarInterfaceUsuario() {
+            if (usuarioLogado) {
+                document.getElementById('nomeUsuario').textContent = usuarioLogado.nome;
+                document.getElementById('tipoPlano').textContent = usuarioLogado.plano === 'premium' ? '(Premium)' : '(Gratuito)';
+                
+                if (usuarioLogado.plano === 'gratuito') {
+                    document.getElementById('bannerPremium').classList.remove('hidden');
+                } else {
+                    document.getElementById('bannerPremium').classList.add('hidden');
+                }
+            }
+        }
+
+        function inicializarEventosLogin() {
+            // Login
+            document.getElementById('loginFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                fazerLogin();
+            });
+
+            // Cadastro
+            document.getElementById('cadastroFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                fazerCadastro();
+            });
+
+            // Navegação entre telas
+            document.getElementById('mostrarCadastro').addEventListener('click', function() {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('cadastroForm').classList.remove('hidden');
+            });
+
+            document.getElementById('voltarLogin').addEventListener('click', function() {
+                document.getElementById('cadastroForm').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+            });
+
+            document.getElementById('loginTeste').addEventListener('click', function() {
+                usuarioLogado = {
+                    email: 'teste@teste.com',
+                    nome: 'Usuário Teste',
+                    plano: 'gratuito',
+                    ativo: true
+                };
+                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+                
+                const dadosExistentes = localStorage.getItem(`dadosFinanceiros_${usuarioLogado.email}`);
+                if (!dadosExistentes) {
+                    inicializarDadosFinanceirosVazios(usuarioLogado.email);
+                }
+                
+                mostrarSistema();
+            });
+
+            // Menu usuário
+            document.getElementById('menuUsuario').addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = document.getElementById('dropdownUsuario');
+                dropdown.classList.toggle('hidden');
+            });
+
+            document.getElementById('sairUsuario').addEventListener('click', logout);
+            document.getElementById('upgradeMenu').addEventListener('click', abrirModalPagamento);
+            
+            // Eventos de pagamento
+            document.getElementById('upgradeBtn').addEventListener('click', abrirModalPagamento);
+            document.getElementById('fecharPagamento').addEventListener('click', function() {
+                document.getElementById('modalPagamento').classList.add('hidden');
+            });
+            document.getElementById('pagarPIX').addEventListener('click', function() {
+                document.getElementById('modalPagamento').classList.add('hidden');
+                document.getElementById('modalPIX').classList.remove('hidden');
+            });
+            document.getElementById('pagarCartao').addEventListener('click', function() {
+                alert('Redirecionando para PagSeguro... (Em breve!)');
+            });
+            document.getElementById('simularPagamento').addEventListener('click', ativarPremium);
+            document.getElementById('fecharPIX').addEventListener('click', function() {
+                document.getElementById('modalPIX').classList.add('hidden');
+            });
+
+            // Fechar dropdown ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!document.getElementById('menuUsuario').contains(e.target)) {
+                    document.getElementById('dropdownUsuario').classList.add('hidden');
+                }
+            });
+        }
+
+        async function fazerLogin() {
+            const email = document.getElementById('emailLogin').value;
+            const senha = document.getElementById('senhaLogin').value;
+
+            // Verificar se usuário está bloqueado ANTES de fazer login
+            if (await verificarBloqueio(email)) {
+                logoutAutomatico('bloqueado');
+                return false;
+            }
+
+            let usuario = null;
+            
+            if (supabaseConectado) {
+                try {
+                    const { data: usuarios, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('email', email)
+                        .eq('senha', senha);
+                    
+                    if (!error && usuarios && usuarios.length > 0) {
+                        usuario = usuarios[0];
+                    }
+                } catch (error) {
+                    console.log('Erro buscando usuário:', error);
+                }
+            }
+            
+            if (!usuario) {
+                // Fallback localStorage
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                usuario = usuarios.find(u => u.email === email && u.senha === senha);
+            }
+
+            if (usuario) {
+                usuarioLogado = usuario;
+                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+                
+                const dadosExistentes = localStorage.getItem(`dadosFinanceiros_${email}`);
+                if (!dadosExistentes) {
+                    inicializarDadosFinanceirosVazios(email);
+                }
+                
+                mostrarSistema();
+                return true;
+            } else {
+                alert('Email ou senha incorretos!');
+                return false;
+            }
+        }
+
+        async function fazerCadastro() {
+            const nome = document.getElementById('nomeCadastro').value;
+            const email = document.getElementById('emailCadastro').value;
+            const senha = document.getElementById('senhaCadastro').value;
+
+            if (!nome || !email || !senha) {
+                alert('Todos os campos são obrigatórios!');
+                return;
+            }
+
+            // Verificar se email já existe
+            let emailExiste = false;
+            
+            if (supabaseConectado) {
+                try {
+                    const { data: usuarios } = await supabase
+                        .from('users')
+                        .select('email')
+                        .eq('email', email);
+                    
+                    emailExiste = usuarios && usuarios.length > 0;
+                } catch (error) {
+                    console.log('Erro verificando email:', error);
+                }
+            }
+            
+            if (!emailExiste) {
+                // Fallback localStorage
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                emailExiste = usuarios.find(u => u.email === email);
+            }
+            
+            if (emailExiste) {
+                alert('Este email já está cadastrado!');
+                return;
+            }
+
+            const novoUsuario = {
+                nome: nome,
+                email: email,
+                senha: senha,
+                plano: 'gratuito',
+                ativo: true,
+                data_criacao: new Date().toISOString()
+            };
+
+            // Salvar no Supabase
+            if (supabaseConectado) {
+                try {
+                    const { error } = await supabase
+                        .from('users')
+                        .insert([novoUsuario]);
+                    
+                    if (error) {
+                        console.log('Erro salvando usuário no Supabase:', error);
+                    }
+                } catch (error) {
+                    console.log('Erro cadastrando usuário:', error);
+                }
+            }
+            
+            // Salvar no localStorage como backup
+            const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+            usuarios.push(novoUsuario);
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            
+            inicializarDadosFinanceirosVazios(email);
+
+            alert('Conta criada com sucesso! Faça login para continuar.');
+            
+            document.getElementById('cadastroForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        function logout() {
+            localStorage.removeItem('usuarioLogado');
+            usuarioLogado = null;
+            document.getElementById('dropdownUsuario').classList.add('hidden');
+            mostrarLogin();
+        }
+
+        async function abrirModalPagamento() {
+            document.getElementById('dropdownUsuario').classList.add('hidden');
+            await atualizarTextosPremium();
+            document.getElementById('modalPagamento').classList.remove('hidden');
+        }
+
+        function ativarPremium() {
+            if (usuarioLogado) {
+                usuarioLogado.plano = 'premium';
+                usuarioLogado.dataUpgrade = new Date().toISOString();
+                
+                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+                
+                // Atualizar no Supabase
+                if (supabaseConectado) {
+                    supabase.from('users')
+                        .update({ plano: 'premium', data_upgrade: usuarioLogado.dataUpgrade })
+                        .eq('email', usuarioLogado.email)
+                        .then(({ error }) => {
+                            if (error) console.log('Erro atualizando plano:', error);
+                        });
+                }
+                
+                // Atualizar localStorage
+                const usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+                const index = usuarios.findIndex(u => u.email === usuarioLogado.email);
+                if (index !== -1) {
+                    usuarios[index] = usuarioLogado;
+                    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                }
+                
+                document.getElementById('modalPagamento').classList.add('hidden');
+                atualizarInterfaceUsuario();
+                mostrarNotificacao('✅ Pagamento confirmado! Conta atualizada para Premium!');
+            }
+        }
+
+        function verificarPermissao(funcionalidade) {
+            if (!usuarioLogado) return false;
+            
+            if (funcionalidade === 'relatorio' || funcionalidade === 'export') {
+                return usuarioLogado.plano === 'premium';
+            }
+            
+            return true;
+        }
+
+        // Configurar todos os event listeners
+        function configurarEventos() {
+            document.getElementById('mesAnterior').addEventListener('click', () => navegarMes(-1));
+            document.getElementById('proximoMes').addEventListener('click', () => navegarMes(1));
+            document.getElementById('adicionarReceber').addEventListener('click', () => abrirModal('receber'));
+            document.getElementById('adicionarPagar').addEventListener('click', () => abrirModal('pagar'));
+            document.getElementById('verRelatorio').addEventListener('click', async function() {
+                if (!verificarPermissao('relatorio')) {
+                    const preco = await obterPrecoAtual();
+                    const precoFormatado = `R$ ${preco.toFixed(2).replace('.', ',')}`;
+                    alert(`🔒 Funcionalidade Premium\n\nOs relatórios históricos estão disponíveis apenas para usuários Premium.\n\nFaça upgrade por apenas ${precoFormatado}/mês!`);
+                    abrirModalPagamento();
+                    return;
+                }
+                abrirRelatorio();
+            });
+            document.getElementById('cancelarModal').addEventListener('click', fecharModal);
+            document.getElementById('formConta').addEventListener('submit', salvarConta);
+            document.getElementById('fecharRelatorio').addEventListener('click', () => {
+                document.getElementById('modalRelatorio').classList.add('hidden');
+            });
+            document.getElementById('exportarRelatorio').addEventListener('click', function() {
+                if (!verificarPermissao('export')) {
+                    alert('🔒 Funcionalidade Premium\n\nA exportação está disponível apenas para usuários Premium.');
+                    return;
+                }
+                exportarRelatorioCSV();
+            });
+            
+            // Event listeners do modal de exclusão
+            document.getElementById('excluirApenas').addEventListener('click', () => excluirContaConfirmado(false));
+            document.getElementById('excluirSerie').addEventListener('click', () => excluirContaConfirmado(true));
+            document.getElementById('cancelarExclusao').addEventListener('click', () => {
+                document.getElementById('modalExclusaoSerie').classList.add('hidden');
+                contaParaExcluir = null;
+                tipoContaParaExcluir = null;
+            });
+            
+            // Event listener para mostrar/esconder opções de recorrência
+            document.getElementById('recorrente').addEventListener('change', function() {
+                const recorrenciaOptions = document.getElementById('recorrenciaOptions');
+                if (this.checked) {
+                    recorrenciaOptions.classList.remove('hidden');
+                } else {
+                    recorrenciaOptions.classList.add('hidden');
+                }
+            });
+        }
+
+        // Navegar entre meses
+        function navegarMes(direcao) {
+            mesAtual += direcao;
+            if (mesAtual < 1) {
+                mesAtual = 12;
+                anoAtual--;
+            } else if (mesAtual > 12) {
+                mesAtual = 1;
+                anoAtual++;
+            }
+            carregarMes();
+        }
+
+        // Carregar dados do mês atual
+        async function carregarMes() {
+            document.getElementById('mesAtual').textContent = `${meses[mesAtual - 1]} ${anoAtual}`;
+            
+            const dados = await carregarDadosDoMes(anoAtual, mesAtual);
+            renderizarTabela('receber', dados.contasReceber);
+            renderizarTabela('pagar', dados.contasPagar);
+            atualizarResumo();
+            verificarSeExibeMensagemBoasVindas();
+        }
+
+        // Ordenar contas por data
+        function ordenarContasPorData(contas) {
+            if (!contas || !Array.isArray(contas)) return [];
+            return contas.sort((a, b) => new Date(a.data) - new Date(b.data));
+        }
+
+        // Renderizar tabela
+        function renderizarTabela(tipo, contas) {
+            const tbody = document.getElementById(tipo === 'receber' ? 'tabelaReceber' : 'tabelaPagar');
+            tbody.innerHTML = '';
+            
+            if (!contas || !Array.isArray(contas)) return;
+            
+            const contasOrdenadas = ordenarContasPorData([...contas]);
+            
+            if (contasOrdenadas.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="5" class="px-2 py-4 text-center text-gray-500">
+                        <i class="fas fa-${tipo === 'receber' ? 'plus' : 'minus'}-circle text-2xl mb-2"></i><br>
+                        Nenhuma conta ${tipo === 'receber' ? 'a receber' : 'a pagar'} este mês
+                    </td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            contasOrdenadas.forEach((conta, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                
+                const statusClass = conta.status === 'pago' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                const statusText = conta.status === 'pago' ? 'Pago' : 'Pendente';
+                const statusIcon = conta.status === 'pago' ? 'fas fa-check' : 'far fa-clock';
+                
+                // Verificar se é parte de uma série
+                let descricaoTexto = conta.descricao;
+                if (conta.serieId && conta.numeroSerie && conta.totalSerie) {
+                    descricaoTexto += ` (${conta.numeroSerie}/${conta.totalSerie})`;
+                }
+                
+                tr.innerHTML = `
+                    <td class="px-2 py-2 text-xs">${new Date(conta.data).toLocaleDateString('pt-BR')}</td>
+                    <td class="px-2 py-2 text-xs">${descricaoTexto}</td>
+                    <td class="px-2 py-2 text-xs font-semibold">R$ ${parseFloat(conta.valor).toFixed(2).replace('.', ',')}</td>
+                    <td class="px-2 py-2">
+                        <button onclick="alternarStatus(${index}, '${tipo}')" class="px-2 py-1 rounded text-xs font-medium ${statusClass} hover:opacity-80 touch-target">
+                            <i class="${statusIcon} mr-1"></i>
+                            ${statusText}
+                        </button>
+                    </td>
+                    <td class="px-2 py-2">
+                        <div class="flex space-x-1">
+                            <button onclick="editarConta(${index}, '${tipo}')" class="text-blue-600 hover:text-blue-900 p-1 touch-target" title="Editar">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                            <button onclick="excluirConta(${index}, '${tipo}')" class="text-red-600 hover:text-red-900 p-1 touch-target" title="Excluir">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Alternar status entre pago e pendente - FUNÇÃO CORRIGIDA
+        async function alternarStatus(index, tipo) {
+            const dados = await carregarDadosDoMes(anoAtual, mesAtual);
+            const contas = tipo === 'receber' ? dados.contasReceber : dados.contasPagar;
+            
+            if (index >= 0 && index < contas.length) {
+                const conta = contas[index];
+                const novoStatus = conta.status === 'pago' ? 'pendente' : 'pago';
+                
+                // Atualizar status
+                conta.status = novoStatus;
+                
+                // Atualizar no Supabase
+                await atualizarStatusSupabase(conta, novoStatus, tipo);
+                
+                // Salvar localmente
+                await salvarDadosDoMes(anoAtual, mesAtual, dados);
+                
+                // Recarregar interface
+                carregarMes();
+                
+                mostrarNotificacao(`Status alterado para ${novoStatus}!`);
+            }
+        }
+
+        // Atualizar resumo mensal
+        function atualizarResumo() {
+            const tabelaReceber = document.getElementById('tabelaReceber');
+            const tabelaPagar = document.getElementById('tabelaPagar');
+            
+            let totalReceber = 0;
+            let totalPagar = 0;
+            
+            // Calcular total a receber
+            const rowsReceber = tabelaReceber.querySelectorAll('tr');
+            rowsReceber.forEach(row => {
+                const valorCell = row.cells[2];
+                if (valorCell && !valorCell.textContent.includes('Nenhuma conta')) {
+                    const valor = parseFloat(valorCell.textContent.replace('R$ ', '').replace(',', '.'));
+                    if (!isNaN(valor)) {
+                        totalReceber += valor;
+                    }
+                }
+            });
+            
+            // Calcular total a pagar
+            const rowsPagar = tabelaPagar.querySelectorAll('tr');
+            rowsPagar.forEach(row => {
+                const valorCell = row.cells[2];
+                if (valorCell && !valorCell.textContent.includes('Nenhuma conta')) {
+                    const valor = parseFloat(valorCell.textContent.replace('R$ ', '').replace(',', '.'));
+                    if (!isNaN(valor)) {
+                        totalPagar += valor;
+                    }
+                }
+            });
+            
+            const saldo = totalReceber - totalPagar;
+            
+            document.getElementById('totalReceber').textContent = `R$ ${totalReceber.toFixed(2).replace('.', ',')}`;
+            document.getElementById('totalPagar').textContent = `R$ ${totalPagar.toFixed(2).replace('.', ',')}`;
+            document.getElementById('saldoValor').textContent = `R$ ${Math.abs(saldo).toFixed(2).replace('.', ',')}`;
+            
+            const saldoCard = document.getElementById('saldoCard');
+            const saldoIcon = document.getElementById('saldoIcon');
+            const saldoLabel = document.getElementById('saldoLabel');
+            
+            if (saldo > 0) {
+                saldoCard.className = 'bg-green-100 border-l-4 border-green-500 p-4 rounded shadow card-shadow';
+                saldoIcon.className = 'fas fa-arrow-up text-green-500 text-2xl mr-3';
+                saldoLabel.className = 'text-green-600 text-sm font-medium';
+                saldoLabel.textContent = 'Saldo Positivo';
+                document.getElementById('saldoValor').className = 'text-green-800 text-xl font-bold';
+            } else if (saldo < 0) {
+                saldoCard.className = 'bg-red-100 border-l-4 border-red-500 p-4 rounded shadow card-shadow';
+                saldoIcon.className = 'fas fa-arrow-down text-red-500 text-2xl mr-3';
+                saldoLabel.className = 'text-red-600 text-sm font-medium';
+                saldoLabel.textContent = 'Saldo Negativo';
+                document.getElementById('saldoValor').className = 'text-red-800 text-xl font-bold';
+            } else {
+                saldoCard.className = 'bg-gray-100 border-l-4 border-gray-500 p-4 rounded shadow card-shadow';
+                saldoIcon.className = 'fas fa-balance-scale text-gray-500 text-2xl mr-3';
+                saldoLabel.className = 'text-gray-600 text-sm font-medium';
+                saldoLabel.textContent = 'Saldo Equilibrado';
+                document.getElementById('saldoValor').className = 'text-gray-800 text-xl font-bold';
+            }
+        }
+
+        // Abrir modal para adicionar/editar conta
+        function abrirModal(tipo, conta = null, index = null) {
+            tipoContaAtual = tipo;
+            contaEditando = conta ? { ...conta, index } : null;
+            
+            document.getElementById('tituloModal').textContent = 
+                conta ? 'Editar Conta' : (tipo === 'receber' ? 'Adicionar Conta a Receber' : 'Adicionar Conta a Pagar');
+            
+            // Limpar formulário
+            document.getElementById('formConta').reset();
+            document.getElementById('recorrenciaOptions').classList.add('hidden');
+            
+            // Se editando, preencher campos
+            if (conta) {
+                document.getElementById('data').value = conta.data;
+                document.getElementById('descricao').value = conta.descricao;
+                document.getElementById('valor').value = conta.valor;
+                document.getElementById('metodoPagamento').value = conta.metodoPagamento || 'PIX';
+                document.getElementById('recorrente').checked = conta.recorrente || false;
+                document.getElementById('quantidadeMeses').value = conta.totalSerie || 1;
+                
+                if (conta.recorrente) {
+                    document.getElementById('recorrenciaOptions').classList.remove('hidden');
+                }
+            } else {
+                // Data padrão: primeiro dia do mês atual
+                const dataAtual = new Date(anoAtual, mesAtual - 1, 1);
+                document.getElementById('data').value = dataAtual.toISOString().split('T')[0];
+            }
+            
+            document.getElementById('modalConta').classList.remove('hidden');
+        }
+
+        // Fechar modal
+        function fecharModal() {
+            document.getElementById('modalConta').classList.add('hidden');
+            contaEditando = null;
+            tipoContaAtual = null;
+        }
+
+        // Salvar conta
+        async function salvarConta(e) {
+            e.preventDefault();
+            
+            const data = document.getElementById('data').value;
+            const descricao = document.getElementById('descricao').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const metodoPagamento = document.getElementById('metodoPagamento').value;
+            const recorrente = document.getElementById('recorrente').checked;
+            const quantidadeMeses = recorrente ? parseInt(document.getElementById('quantidadeMeses').value) : 1;
+            
+            if (!data || !descricao || isNaN(valor) || valor <= 0) {
+                alert('Por favor, preencha todos os campos corretamente.');
+                return;
+            }
+            
+            const dataObj = new Date(data + 'T12:00:00');
+            const ano = dataObj.getFullYear();
+            const mes = dataObj.getMonth() + 1;
+            
+            if (contaEditando) {
+                // Editando conta existente
+                const dadosOrigem = await carregarDadosDoMes(contaEditando.ano, contaEditando.mes);
+                const contas = tipoContaAtual === 'receber' ? dadosOrigem.contasReceber : dadosOrigem.contasPagar;
+                
+                if (contaEditando.index >= 0 && contaEditando.index < contas.length) {
+                    // Excluir conta antiga do Supabase
+                    await excluirContaSupabase(contas[contaEditando.index], tipoContaAtual);
+                    
+                    // Atualizar conta
+                    contas[contaEditando.index] = {
+                        ...contas[contaEditando.index],
+                        data: data,
+                        descricao: descricao,
+                        valor: valor,
+                        metodoPagamento: metodoPagamento,
+                        ano: ano,
+                        mes: mes
+                    };
+                    
+                    // Salvar no Supabase
+                    await salvarContaSupabase(contas[contaEditando.index], tipoContaAtual);
+                    
+                    await salvarDadosDoMes(contaEditando.ano, contaEditando.mes, dadosOrigem);
+                    
+                    mostrarNotificacao('Conta atualizada com sucesso!');
+                }
+            } else {
+                // Adicionando nova conta
+                if (recorrente && quantidadeMeses > 1) {
+                    // Criar série de contas recorrentes
+                    const serieId = Date.now().toString();
+                    
+                    for (let i = 0; i < quantidadeMeses; i++) {
+                        const dataAtual = new Date(dataObj);
+                        dataAtual.setMonth(dataAtual.getMonth() + i);
+                        
+                        const anoAtual = dataAtual.getFullYear();
+                        const mesAtual = dataAtual.getMonth() + 1;
+                        const dataFormatada = dataAtual.toISOString().split('T')[0];
+                        
+                        const novaConta = {
+                            data: dataFormatada,
+                            descricao: descricao,
+                            valor: valor,
+                            metodoPagamento: metodoPagamento,
+                            status: 'pendente',
+                            recorrente: true,
+                            serieId: serieId,
+                            numeroSerie: i + 1,
+                            totalSerie: quantidadeMeses,
+                            ano: anoAtual,
+                            mes: mesAtual
+                        };
+                        
+                        const dadosDoMes = await carregarDadosDoMes(anoAtual, mesAtual);
+                        
+                        if (tipoContaAtual === 'receber') {
+                            dadosDoMes.contasReceber.push(novaConta);
+                        } else {
+                            dadosDoMes.contasPagar.push(novaConta);
+                        }
+                        
+                        // Salvar no Supabase
+                        await salvarContaSupabase(novaConta, tipoContaAtual);
+                        
+                        await salvarDadosDoMes(anoAtual, mesAtual, dadosDoMes);
+                    }
+                    
+                    mostrarNotificacao(`Série de ${quantidadeMeses} contas criada com sucesso!`);
+                } else {
+                    // Criar conta única
+                    const novaConta = {
+                        data: data,
+                        descricao: descricao,
+                        valor: valor,
+                        metodoPagamento: metodoPagamento,
+                        status: 'pendente',
+                        recorrente: false,
+                        ano: ano,
+                        mes: mes
+                    };
+                    
+                    const dadosDoMes = await carregarDadosDoMes(ano, mes);
+                    
+                    if (tipoContaAtual === 'receber') {
+                        dadosDoMes.contasReceber.push(novaConta);
+                    } else {
+                        dadosDoMes.contasPagar.push(novaConta);
+                    }
+                    
+                    // Salvar no Supabase
+                    await salvarContaSupabase(novaConta, tipoContaAtual);
+                    
+                    await salvarDadosDoMes(ano, mes, dadosDoMes);
+                    
+                    mostrarNotificacao('Conta adicionada com sucesso!');
+                }
+            }
+            
+            fecharModal();
+            carregarMes();
+        }
+
+        // Editar conta
+        async function editarConta(index, tipo) {
+            const dados = await carregarDadosDoMes(anoAtual, mesAtual);
+            const contas = tipo === 'receber' ? dados.contasReceber : dados.contasPagar;
+            
+            if (index >= 0 && index < contas.length) {
+                const conta = { ...contas[index], ano: anoAtual, mes: mesAtual };
+                abrirModal(tipo, conta, index);
+            }
+        }
+
+        // Excluir conta
+        async function excluirConta(index, tipo) {
+            const dados = await carregarDadosDoMes(anoAtual, mesAtual);
+            const contas = tipo === 'receber' ? dados.contasReceber : dados.contasPagar;
+            
+            if (index >= 0 && index < contas.length) {
+                const conta = contas[index];
+                
+                // Se faz parte de uma série, perguntar o que fazer
+                if (conta.serieId) {
+                    contaParaExcluir = { ...conta, index };
+                    tipoContaParaExcluir = tipo;
+                    
+                    document.getElementById('mensagemExclusao').textContent = 
+                        `Esta conta faz parte de uma série recorrente (${conta.numeroSerie}/${conta.totalSerie}). O que deseja fazer?`;
+                    
+                    document.getElementById('modalExclusaoSerie').classList.remove('hidden');
+                } else {
+                    // Excluir conta única diretamente
+                    if (confirm('Tem certeza que deseja excluir esta conta?')) {
+                        // Excluir do Supabase
+                        await excluirContaSupabase(conta, tipo);
+                        
+                        contas.splice(index, 1);
+                        await salvarDadosDoMes(anoAtual, mesAtual, dados);
+                        carregarMes();
+                        mostrarNotificacao('Conta excluída com sucesso!');
+                    }
+                }
+            }
+        }
+
+        // Confirmar exclusão de série
+        async function excluirContaConfirmado(excluirSerie) {
+            if (!contaParaExcluir || !tipoContaParaExcluir) return;
+            
+            const conta = contaParaExcluir;
+            const tipo = tipoContaParaExcluir;
+            
+            if (excluirSerie) {
+                // Excluir esta conta e todas as futuras da série
+                for (let ano = 2024; ano <= 2026; ano++) {
+                    for (let mes = 1; mes <= 12; mes++) {
+                        const dados = await carregarDadosDoMes(ano, mes);
+                        const contas = tipo === 'receber' ? dados.contasReceber : dados.contasPagar;
+                        
+                        const contasParaRemover = [];
+                        contas.forEach((c, i) => {
+                            if (c.serieId === conta.serieId && c.numeroSerie >= conta.numeroSerie) {
+                                contasParaRemover.push({ conta: c, index: i });
+                            }
+                        });
+                        
+                        // Remover do Supabase e do array (do final para o início)
+                        for (let i = contasParaRemover.length - 1; i >= 0; i--) {
+                            await excluirContaSupabase(contasParaRemover[i].conta, tipo);
+                            contas.splice(contasParaRemover[i].index, 1);
+                        }
+                        
+                        if (contasParaRemover.length > 0) {
+                            await salvarDadosDoMes(ano, mes, dados);
+                        }
+                    }
+                }
+                
+                mostrarNotificacao('Série de contas excluída com sucesso!');
+            } else {
+                // Excluir apenas esta conta
+                const dados = await carregarDadosDoMes(anoAtual, mesAtual);
+                const contas = tipo === 'receber' ? dados.contasReceber : dados.contasPagar;
+                
+                // Excluir do Supabase
+                await excluirContaSupabase(conta, tipo);
+                
+                contas.splice(conta.index, 1);
+                await salvarDadosDoMes(anoAtual, mesAtual, dados);
+                mostrarNotificacao('Conta excluída com sucesso!');
+            }
+            
+            document.getElementById('modalExclusaoSerie').classList.add('hidden');
+            contaParaExcluir = null;
+            tipoContaParaExcluir = null;
+            carregarMes();
+        }
+
+        // Abrir relatório
+        async function abrirRelatorio() {
+            const tbody = document.getElementById('tabelaRelatorio');
+            tbody.innerHTML = '';
+            
+            let relatorioData = [];
+            
+            // Carregar dados de todos os meses
+            for (let ano = 2024; ano <= 2026; ano++) {
+                for (let mes = 1; mes <= 12; mes++) {
+                    const dados = await carregarDadosDoMes(ano, mes);
+                    
+                    let totalRecebido = 0;
+                    let totalPago = 0;
+                    
+                    dados.contasReceber.forEach(conta => {
+                        if (conta.status === 'pago') {
+                            totalRecebido += parseFloat(conta.valor);
+                        }
+                    });
+                    
+                    dados.contasPagar.forEach(conta => {
+                        if (conta.status === 'pago') {
+                            totalPago += parseFloat(conta.valor);
+                        }
+                    });
+                    
+                    if (totalRecebido > 0 || totalPago > 0) {
+                        relatorioData.push({
+                            ano: ano,
+                            mes: mes,
+                            totalRecebido: totalRecebido,
+                            totalPago: totalPago,
+                            diferenca: totalRecebido - totalPago
+                        });
+                    }
+                }
+            }
+            
+            // Ordenar por ano e mês
+            relatorioData.sort((a, b) => {
+                if (a.ano !== b.ano) return a.ano - b.ano;
+                return a.mes - b.mes;
+            });
+            
+            // Renderizar tabela
+            relatorioData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-4 py-3">${meses[item.mes - 1]} ${item.ano}</td>
+                    <td class="px-4 py-3 text-green-600 font-semibold">R$ ${item.totalRecebido.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-4 py-3 text-red-600 font-semibold">R$ ${item.totalPago.toFixed(2).replace('.', ',')}</td>
+                    <td class="px-4 py-3 ${item.diferenca >= 0 ? 'text-green-600' : 'text-red-600'} font-bold">
+                        R$ ${Math.abs(item.diferenca).toFixed(2).replace('.', ',')}
+                        ${item.diferenca >= 0 ? '(+)' : '(-)'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (relatorioData.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-chart-line text-3xl mb-2"></i><br>
+                        Nenhum dado de relatório disponível ainda
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+            
+            document.getElementById('modalRelatorio').classList.remove('hidden');
+        }
+
+        // Exportar relatório CSV
+        function exportarRelatorioCSV() {
+            const tabela = document.getElementById('tabelaRelatorio');
+            const rows = tabela.querySelectorAll('tr');
+            
+            if (rows.length === 0) {
+                alert('Não há dados para exportar.');
+                return;
+            }
+            
+            let csvContent = 'Mês/Ano,Total Recebido,Total Pago,Diferença\n';
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 4) {
+                    const rowData = Array.from(cells).map(cell => 
+                        cell.textContent.replace(/,/g, ';')
+                    ).join(',');
+                    csvContent += rowData + '\n';
+                }
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `relatorio-financeiro-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Mostrar notificação
+        function mostrarNotificacao(mensagem) {
+            document.getElementById('mensagemNotificacao').textContent = mensagem;
+            document.getElementById('notificacao').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('notificacao').classList.add('hidden');
+            }, 3000);
+        }
+
+        // Funções globais para onClick
+        window.alternarStatus = alternarStatus;
+        window.editarConta = editarConta;
+        window.excluirConta = excluirConta;
+    </script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDnl2dCFGb0fChPmEqHfBLMkIxwugGzE2pLJvOsgKUgmzLqdNP1wU21SuCrP82SeKcOF%2BHcGa1LVjLZ8aWa3eFN6%2FktRUCV7YgsEReRGqUhvABp6EPfR0KIcPYNQ04L42iIEEpICQxTAwIL73re2OMLueKa82PC4ii2Ditxyo%2BrddS25pYUok%2F6I7duqy0X1x9YuGhEIM%2FOL%2FkRJdD2%2F4vJ8kf1ICoKxZey7%2BkhCMSlxmlXHX3za33aueQuAOs1eEzokezSY%2Fpv5f84tdMC37f9pIUVjvmBbVMPu92zQdCLE42QbrrCUutjU4T6jB5G2ePTU%2BDTc1UDKuHW4V7IBXIWKqvrvJ1WIY4pIvVbaHl4FVs%2F9RI6W0o4NK%2F9bOl7CNZQGEwu75LgNWXHK3EV6qdz6e9n4ikuJp0or1uNXvjfVlpKN3Sl0j%2FrTZvz5mAc%2FZrlz8Dqz5vD71SLYLTF4HXEUu%2B2dBAxY7zlZ%2FxISVLQvaYmvt%2FVDK%2Bqi4J1IcDz61EEDmxFAalVZREiwfOFjWjro%3D";
+        window.__genspark_locale = "pt-BR";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDnl2dCFGb0fChPmEqHfBLMkIxwugGzE2pLJvOsgKUgmzLqdNP1wU21SuCrP82SeKcOF+HcGa1LVjLZ8aWa3eFN6/ktRUCV7YgsEReRGqUhvABp6EPfR0KIcPYNQ04L42iIEEpICQxTAwIL73re2OMLueKa82PC4ii2Ditxyo+rddS25pYUok/6I7duqy0X1x9YuGhEIM/OL/kRJdD2/4vJ8kf1ICoKxZey7+khCMSlxmlXHX3za33aueQuAOs1eEzokezSY/pv5f84tdMC37f9pIUVjvmBbVMPu92zQdCLE42QbrrCUutjU4T6jB5G2ePTU+DTc1UDKuHW4V7IBXIWKqvrvJ1WIY4pIvVbaHl4FVs/9RI6W0o4NK/9bOl7CNZQGEwu75LgNWXHK3EV6qdz6e9n4ikuJp0or1uNXvjfVlpKN3Sl0j/rTZvz5mAc/Zrlz8Dqz5vD71SLYLTF4HXEUu+2dBAxY7zlZ/xISVLQvaYmvt/VDK+qi4J1IcDz61EEDmxFAalVZREiwfOFjWjro=";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
